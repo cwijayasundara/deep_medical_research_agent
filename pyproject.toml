@@ -5,11 +5,19 @@
 # ============================================================
 
 [project]
-name = "my-project"
+name = "deep-medical-research-agent"
 version = "0.1.0"
-description = "Your project description"
+description = "AI-powered medical research agent using LangChain Deep Agents with Qwen3 and MedGemma"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "deepagents>=0.1.0",
+    "langchain-ollama>=0.3.0",
+    "langchain-tavily>=0.2.17",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "pydantic-settings>=2.7.0",
+    "python-slugify>=8.0.0",
+]
 
 [project.optional-dependencies]
 dev = [
