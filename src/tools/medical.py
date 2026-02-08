@@ -6,7 +6,8 @@ for domain-specific analysis, with fallback to Qwen3 and a disclaimer.
 
 import logging
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,7 @@ MEDICAL_DISCLAIMER = (
 )
 
 FALLBACK_WARNING = (
-    "Note: Medical specialist model unavailable. "
-    "Analysis provided by general-purpose model.\n\n"
+    "Note: Medical specialist model unavailable. Analysis provided by general-purpose model.\n\n"
 )
 
 TIMEOUT_ERROR_MSG = (
@@ -40,8 +40,8 @@ TIMEOUT_ERROR_MSG = (
 
 def consult_medical_expert(
     query: str,
-    medical_llm: object,
-    fallback_llm: object,
+    medical_llm: BaseChatModel,
+    fallback_llm: BaseChatModel,
 ) -> str:
     """Consult the medical expert model for domain-specific analysis.
 
@@ -49,14 +49,14 @@ def consult_medical_expert(
     Falls back to the orchestrator LLM if MedGemma is unavailable.
     Always appends a medical disclaimer.
     """
-    messages = [
+    messages: list[BaseMessage] = [
         SystemMessage(content=MEDICAL_SYSTEM_PROMPT),
         HumanMessage(content=query),
     ]
 
     try:
-        response = medical_llm.invoke(messages)  # type: ignore[union-attr]
-        return _format_response(response.content)
+        response = medical_llm.invoke(messages)
+        return _format_response(str(response.content))
     except TimeoutError:
         return _handle_timeout(query, fallback_llm, messages)
     except Exception:
@@ -65,16 +65,14 @@ def consult_medical_expert(
 
 def _handle_fallback(
     query: str,
-    fallback_llm: object,
-    messages: list[SystemMessage | HumanMessage],
+    fallback_llm: BaseChatModel,
+    messages: list[BaseMessage],
 ) -> str:
     """Handle MedGemma failure by falling back to Qwen3."""
-    logger.warning(
-        "Medical model unavailable for query '%s', using fallback", query
-    )
+    logger.warning("Medical model unavailable for query '%s', using fallback", query)
     try:
-        response = fallback_llm.invoke(messages)  # type: ignore[union-attr]
-        return FALLBACK_WARNING + response.content + "\n\n" + MEDICAL_DISCLAIMER
+        response = fallback_llm.invoke(messages)
+        return FALLBACK_WARNING + str(response.content) + "\n\n" + MEDICAL_DISCLAIMER
     except TimeoutError as exc:
         logger.error("Fallback model timed out for query '%s': %s", query, exc)
         return TIMEOUT_ERROR_MSG
@@ -85,14 +83,14 @@ def _handle_fallback(
 
 def _handle_timeout(
     query: str,
-    fallback_llm: object,
-    messages: list[SystemMessage | HumanMessage],
+    fallback_llm: BaseChatModel,
+    messages: list[BaseMessage],
 ) -> str:
     """Handle timeout from medical model, try fallback."""
     logger.warning("Medical model timed out for query '%s', trying fallback", query)
     try:
-        response = fallback_llm.invoke(messages)  # type: ignore[union-attr]
-        return FALLBACK_WARNING + response.content + "\n\n" + MEDICAL_DISCLAIMER
+        response = fallback_llm.invoke(messages)
+        return FALLBACK_WARNING + str(response.content) + "\n\n" + MEDICAL_DISCLAIMER
     except TimeoutError as exc:
         logger.error("Both models timed out for query '%s': %s", query, exc)
         return TIMEOUT_ERROR_MSG

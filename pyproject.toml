@@ -73,6 +73,8 @@ module = [
     "pydantic_settings",
     "deepagents",
     "deepagents.*",
+    "langchain_core",
+    "langchain_core.*",
     "langchain_ollama",
     "langchain_ollama.*",
     "langchain_tavily",
