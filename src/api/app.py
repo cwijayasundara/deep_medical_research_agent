@@ -1,7 +1,7 @@
-"""FastAPI application with health check endpoint.
+"""FastAPI application with health check and research endpoints.
 
 Provides the main application factory with CORS configuration,
-settings validation, and an Ollama-aware health check.
+settings validation, health check, and research API routing.
 """
 
 import logging
@@ -11,6 +11,8 @@ import httpx
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.agent.research_agent import create_research_agent
+from src.api.routes.research import create_research_router
 from src.config.settings import Settings, configure_logging, load_settings
 
 logger = logging.getLogger(__name__)
@@ -70,7 +72,7 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application.
 
     Loads settings, configures CORS and logging, and mounts
-    the health check endpoint under /api.
+    health check and research endpoints under /api.
     """
     settings = load_settings()
     if settings is None:
@@ -91,5 +93,14 @@ def create_app() -> FastAPI:
 
     health_router = _create_health_router(settings)
     app.include_router(health_router, prefix=API_PREFIX)
+
+    try:
+        agent = create_research_agent(settings)
+        research_router = create_research_router(settings=settings, agent=agent)
+        app.include_router(research_router, prefix=API_PREFIX)
+        logger.info("Research endpoint mounted at %s/research", API_PREFIX)
+    except Exception as exc:
+        logger.error("Failed to create research agent: %s", exc)
+        logger.warning("Research endpoint will not be available")
 
     return app

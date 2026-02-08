@@ -36,6 +36,7 @@ class TestAppInitialization:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
         ):
             app = create_app()
 
@@ -48,6 +49,7 @@ class TestAppInitialization:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
         ):
             app = create_app()
 
@@ -81,6 +83,7 @@ class TestHealthEndpoint:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
             app = create_app()
@@ -98,6 +101,7 @@ class TestHealthEndpoint:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
             app = create_app()
@@ -115,6 +119,7 @@ class TestHealthEndpoint:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
             app = create_app()
@@ -133,6 +138,7 @@ class TestHealthEndpoint:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
             app = create_app()
@@ -157,6 +163,7 @@ class TestHealthDegradedMode:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
             app = create_app()
@@ -174,6 +181,7 @@ class TestHealthDegradedMode:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
             app = create_app()
@@ -191,6 +199,7 @@ class TestHealthDegradedMode:
         with (
             patch("src.api.app.load_settings", return_value=_make_mock_settings()),
             patch("src.api.app.configure_logging"),
+            patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
             app = create_app()
