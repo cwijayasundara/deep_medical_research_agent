@@ -241,3 +241,78 @@ class TestTimeoutHandling:
         from src.tools.medical import MEDICAL_QUERY_TIMEOUT_SECONDS
 
         assert MEDICAL_QUERY_TIMEOUT_SECONDS == 120
+
+    def test_timeout_with_successful_fallback(self) -> None:
+        """When medical times out but fallback succeeds, returns fallback result."""
+        from src.tools.medical import FALLBACK_WARNING, consult_medical_expert
+
+        mock_medical_llm = MagicMock()
+        mock_medical_llm.invoke.side_effect = TimeoutError("timed out")
+        mock_fallback = MagicMock()
+        mock_fallback.invoke.return_value = MagicMock(content="Fallback analysis")
+
+        result = consult_medical_expert(
+            query="test",
+            medical_llm=mock_medical_llm,
+            fallback_llm=mock_fallback,
+        )
+
+        assert result.startswith(FALLBACK_WARNING)
+        assert "Fallback analysis" in result
+
+    def test_timeout_fallback_general_error(self) -> None:
+        """When medical times out and fallback raises non-timeout, returns error."""
+        from src.tools.medical import consult_medical_expert
+
+        mock_medical_llm = MagicMock()
+        mock_medical_llm.invoke.side_effect = TimeoutError("timed out")
+        mock_fallback = MagicMock()
+        mock_fallback.invoke.side_effect = RuntimeError("unexpected error")
+
+        result = consult_medical_expert(
+            query="test",
+            medical_llm=mock_medical_llm,
+            fallback_llm=mock_fallback,
+        )
+
+        assert "timed out" in result.lower() or "timeout" in result.lower()
+
+
+@pytest.mark.unit
+class TestFallbackEdgeCases:
+    """Additional edge cases for fallback paths."""
+
+    def test_fallback_timeout_returns_timeout_msg(self) -> None:
+        """When medical fails and fallback times out, returns timeout message."""
+        from src.tools.medical import consult_medical_expert
+
+        mock_medical_llm = MagicMock()
+        mock_medical_llm.invoke.side_effect = ConnectionError("unavailable")
+        mock_fallback = MagicMock()
+        mock_fallback.invoke.side_effect = TimeoutError("fallback timed out")
+
+        result = consult_medical_expert(
+            query="test",
+            medical_llm=mock_medical_llm,
+            fallback_llm=mock_fallback,
+        )
+
+        assert "timed out" in result.lower() or "timeout" in result.lower()
+
+    def test_fallback_general_error_returns_failure_msg(self) -> None:
+        """When both medical and fallback fail, returns failure message."""
+        from src.tools.medical import MEDICAL_DISCLAIMER, consult_medical_expert
+
+        mock_medical_llm = MagicMock()
+        mock_medical_llm.invoke.side_effect = ConnectionError("unavailable")
+        mock_fallback = MagicMock()
+        mock_fallback.invoke.side_effect = RuntimeError("also broken")
+
+        result = consult_medical_expert(
+            query="test",
+            medical_llm=mock_medical_llm,
+            fallback_llm=mock_fallback,
+        )
+
+        assert "failed" in result.lower()
+        assert result.endswith(MEDICAL_DISCLAIMER)
