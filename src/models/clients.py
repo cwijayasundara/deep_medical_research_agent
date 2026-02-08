@@ -26,7 +26,7 @@ class ModelConnectionError(Exception):
     """Raised when an Ollama model connection or invocation fails."""
 
 
-def create_orchestrator_llm(settings: Settings) -> ChatOllama:  # type: ignore[type-arg]
+def create_orchestrator_llm(settings: Settings) -> ChatOllama:
     """Create a ChatOllama instance for the orchestrator model (Qwen3).
 
     The orchestrator supports function/tool calling and is used
@@ -38,7 +38,7 @@ def create_orchestrator_llm(settings: Settings) -> ChatOllama:  # type: ignore[t
     )
 
 
-def create_medical_llm(settings: Settings) -> ChatOllama:  # type: ignore[type-arg]
+def create_medical_llm(settings: Settings) -> ChatOllama:
     """Create a ChatOllama instance for the medical model (MedGemma).
 
     MedGemma is used for medical text analysis only — it does NOT
@@ -52,8 +52,8 @@ def create_medical_llm(settings: Settings) -> ChatOllama:  # type: ignore[type-a
 
 def create_medical_llm_with_fallback(
     settings: Settings,
-    orchestrator_llm: ChatOllama,  # type: ignore[type-arg]
-) -> ChatOllama:  # type: ignore[type-arg]
+    orchestrator_llm: ChatOllama,
+) -> ChatOllama:
     """Create the medical LLM, falling back to orchestrator if unavailable.
 
     When MedGemma cannot be initialized, logs a warning and returns
@@ -62,13 +62,11 @@ def create_medical_llm_with_fallback(
     try:
         return create_medical_llm(settings)
     except Exception:
-        logger.warning(
-            "MedGemma unavailable, medical analysis will use Qwen3 as fallback"
-        )
+        logger.warning("MedGemma unavailable, medical analysis will use Qwen3 as fallback")
         return orchestrator_llm
 
 
-def invoke_llm(llm: ChatOllama, prompt: str) -> object:  # type: ignore[type-arg]
+def invoke_llm(llm: ChatOllama, prompt: str) -> object:
     """Invoke an Ollama LLM with error handling.
 
     Wraps connection and timeout errors into ModelConnectionError

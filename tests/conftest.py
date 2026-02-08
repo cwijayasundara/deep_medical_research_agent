@@ -4,6 +4,9 @@ Add fixtures here when the same setup appears in 3+ test files.
 See .claude/skills/testing/SKILL.md for fixture patterns.
 """
 
+from __future__ import annotations
+
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -47,10 +50,8 @@ TEST_MEDICAL_MODEL = "MedAIBase/MedGemma1.0:4b"
 
 
 @pytest.fixture()
-def settings_fixture() -> "MagicMock":
+def settings_fixture() -> MagicMock:
     """Create a mock Settings object with default test values."""
-    from unittest.mock import MagicMock
-
     settings = MagicMock()
     settings.tavily_api_key = TEST_TAVILY_API_KEY
     settings.ollama_base_url = TEST_OLLAMA_BASE_URL
