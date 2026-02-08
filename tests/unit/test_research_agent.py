@@ -21,21 +21,24 @@ class TestCreateResearchAgent:
         """create_research_agent returns a CompiledStateGraph."""
         from src.agent.research_agent import create_research_agent
 
-        with patch("src.agent.research_agent.create_deep_agent") as mock_create:
+        with (
+            patch("src.agent.research_agent.create_deep_agent") as mock_create,
+            patch("src.agent.research_agent.create_orchestrator_llm"),
+            patch("src.agent.research_agent.create_search_tool"),
+        ):
             mock_create.return_value = MagicMock()
             agent = create_research_agent(settings_fixture)
 
         assert agent is not None
 
-    def test_passes_orchestrator_model_to_deep_agent(
-        self, settings_fixture: MagicMock
-    ) -> None:
+    def test_passes_orchestrator_model_to_deep_agent(self, settings_fixture: MagicMock) -> None:
         """Agent uses the orchestrator LLM (Qwen3) as the model."""
         from src.agent.research_agent import create_research_agent
 
         with (
             patch("src.agent.research_agent.create_deep_agent") as mock_create,
             patch("src.agent.research_agent.create_orchestrator_llm") as mock_orch,
+            patch("src.agent.research_agent.create_search_tool"),
         ):
             mock_orch.return_value = MagicMock()
             mock_create.return_value = MagicMock()
@@ -148,8 +151,8 @@ class TestResearchSystemPrompt:
 class TestMedicalConsultationToolCreation:
     """AC-1 continued: Medical consultation tool is properly wrapped."""
 
-    def test_medical_tool_is_callable(self, settings_fixture: MagicMock) -> None:
-        """The medical consultation tool passed to create_deep_agent is callable."""
+    def test_medical_tool_has_invoke_method(self, settings_fixture: MagicMock) -> None:
+        """The medical consultation tool passed to create_deep_agent has an invoke method."""
         from src.agent.research_agent import create_research_agent
 
         with (
@@ -162,8 +165,8 @@ class TestMedicalConsultationToolCreation:
 
         call_kwargs = mock_create.call_args
         tools = call_kwargs.kwargs.get("tools", [])
-        for tool in tools:
-            assert callable(tool)
+        for t in tools:
+            assert hasattr(t, "invoke")
 
     def test_medical_tool_uses_medical_llm(self, settings_fixture: MagicMock) -> None:
         """Medical consultation tool is created with the medical LLM."""
