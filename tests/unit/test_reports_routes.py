@@ -7,22 +7,11 @@ Tests cover:
 - AC-4: Empty reports directory returns empty list
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from tests.conftest import TEST_OUTPUT_DIR
-
-
-def _make_mock_settings() -> MagicMock:
-    """Create a mock Settings with proper string attributes."""
-    settings = MagicMock()
-    settings.orchestrator_model = "qwen3:latest"
-    settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-    settings.ollama_base_url = "http://localhost:11434"
-    settings.log_level = "INFO"
-    settings.output_dir = TEST_OUTPUT_DIR
-    return settings
+from tests.conftest import TEST_OUTPUT_DIR, make_mock_settings
 
 
 def _create_reports_app():
@@ -31,7 +20,7 @@ def _create_reports_app():
 
     from src.api.routes.reports import create_reports_router
 
-    settings = _make_mock_settings()
+    settings = make_mock_settings()
     app = FastAPI()
     router = create_reports_router(settings=settings)
     app.include_router(router, prefix="/api")

@@ -49,9 +49,12 @@ TEST_ORCHESTRATOR_MODEL = "qwen3:latest"
 TEST_MEDICAL_MODEL = "MedAIBase/MedGemma1.0:4b"
 
 
-@pytest.fixture()
-def settings_fixture() -> MagicMock:
-    """Create a mock Settings object with default test values."""
+def make_mock_settings() -> MagicMock:
+    """Create a mock Settings with proper string attributes.
+
+    Use this helper directly when a pytest fixture isn't suitable
+    (e.g. inside test helper functions that build FastAPI test apps).
+    """
     settings = MagicMock()
     settings.tavily_api_key = TEST_TAVILY_API_KEY
     settings.ollama_base_url = TEST_OLLAMA_BASE_URL
@@ -61,3 +64,9 @@ def settings_fixture() -> MagicMock:
     settings.medical_model = TEST_MEDICAL_MODEL
     settings.tavily_include_domains = None
     return settings
+
+
+@pytest.fixture()
+def settings_fixture() -> MagicMock:
+    """Create a mock Settings object with default test values."""
+    return make_mock_settings()

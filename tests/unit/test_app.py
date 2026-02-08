@@ -7,20 +7,11 @@ Tests cover:
 - AC-4: Startup errors handled cleanly (missing TAVILY_API_KEY)
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-
-def _make_mock_settings() -> MagicMock:
-    """Create a mock Settings with proper string attributes."""
-    settings = MagicMock()
-    settings.orchestrator_model = "qwen3:latest"
-    settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-    settings.ollama_base_url = "http://localhost:11434"
-    settings.log_level = "INFO"
-    return settings
-
+from tests.conftest import make_mock_settings
 
 # ---- AC-1: FastAPI app initializes with CORS and settings ----
 
@@ -34,7 +25,7 @@ class TestAppInitialization:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
         ):
@@ -47,7 +38,7 @@ class TestAppInitialization:
         from src.api.app import FRONTEND_ORIGIN, create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
         ):
@@ -81,7 +72,7 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
@@ -99,7 +90,7 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
@@ -117,7 +108,7 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
@@ -136,7 +127,7 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
@@ -161,7 +152,7 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
@@ -179,7 +170,7 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
@@ -197,7 +188,7 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.load_settings", return_value=make_mock_settings()),
             patch("src.api.app.configure_logging"),
             patch("src.api.app.create_research_agent"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),

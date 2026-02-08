@@ -12,6 +12,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent.research_agent import create_research_agent
+from src.api.routes.reports import create_reports_router
 from src.api.routes.research import create_research_router
 from src.config.settings import Settings, configure_logging, load_settings
 
@@ -72,7 +73,7 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application.
 
     Loads settings, configures CORS and logging, and mounts
-    health check and research endpoints under /api.
+    health check, research, and reports endpoints under /api.
     """
     settings = load_settings()
     if settings is None:
@@ -93,6 +94,10 @@ def create_app() -> FastAPI:
 
     health_router = _create_health_router(settings)
     app.include_router(health_router, prefix=API_PREFIX)
+
+    reports_router = create_reports_router(settings=settings)
+    app.include_router(reports_router, prefix=API_PREFIX)
+    logger.info("Reports endpoint mounted at %s/reports", API_PREFIX)
 
     try:
         agent = create_research_agent(settings)

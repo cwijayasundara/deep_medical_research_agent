@@ -14,16 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
-def _make_mock_settings() -> MagicMock:
-    """Create a mock Settings with proper string attributes."""
-    settings = MagicMock()
-    settings.orchestrator_model = "qwen3:latest"
-    settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-    settings.ollama_base_url = "http://localhost:11434"
-    settings.log_level = "INFO"
-    settings.output_dir = "/tmp/test-reports"
-    return settings
+from tests.conftest import make_mock_settings
 
 
 def _create_test_app():
@@ -32,7 +23,7 @@ def _create_test_app():
 
     from src.api.routes.research import create_research_router
 
-    settings = _make_mock_settings()
+    settings = make_mock_settings()
     mock_agent = MagicMock()
     app = FastAPI()
     router = create_research_router(settings=settings, agent=mock_agent)
@@ -53,7 +44,7 @@ class TestResearchEndpointStreaming:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         # Mock stream to yield one result event
         mock_agent.stream.return_value = iter(
@@ -76,7 +67,7 @@ class TestResearchEndpointStreaming:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter([{"messages": [MagicMock(content="Report")]}])
 
@@ -104,7 +95,7 @@ class TestStreamEventFormat:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
@@ -137,7 +128,7 @@ class TestStreamEventFormat:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
@@ -167,7 +158,7 @@ class TestStreamEventFormat:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
@@ -213,7 +204,7 @@ class TestReportAutoSave:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
@@ -242,7 +233,7 @@ class TestReportAutoSave:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
@@ -318,7 +309,7 @@ class TestAgentErrorStreaming:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.side_effect = RuntimeError("Agent crashed")
 
@@ -352,7 +343,7 @@ class TestAgentErrorStreaming:
 
         from src.api.routes.research import create_research_router
 
-        settings = _make_mock_settings()
+        settings = make_mock_settings()
         mock_agent = MagicMock()
         mock_agent.stream.side_effect = RuntimeError("Agent crashed")
 

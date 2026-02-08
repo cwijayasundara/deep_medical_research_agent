@@ -11,7 +11,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.config.settings import Settings
-from src.services.report_service import ReportNotFoundError, get_report, list_reports
+from src.services.report_service import (
+    FRONT_MATTER_DELIMITER,
+    ReportNotFoundError,
+    get_report,
+    list_reports,
+)
 from src.services.report_service import _parse_front_matter as parse_front_matter
 
 logger = logging.getLogger(__name__)
@@ -58,13 +63,12 @@ def _id_to_filename(report_id: str) -> str:
 
 def _extract_body(raw_text: str) -> str:
     """Extract the markdown body from a report, stripping front matter."""
-    delimiter = "---"
-    if not raw_text.startswith(f"{delimiter}\n"):
+    if not raw_text.startswith(f"{FRONT_MATTER_DELIMITER}\n"):
         return raw_text
 
     try:
-        end_idx = raw_text.index(f"\n{delimiter}\n", len(delimiter))
-        return raw_text[end_idx + len(delimiter) + 2 :]
+        end_idx = raw_text.index(f"\n{FRONT_MATTER_DELIMITER}\n", len(FRONT_MATTER_DELIMITER))
+        return raw_text[end_idx + len(FRONT_MATTER_DELIMITER) + 2 :]
     except ValueError:
         return raw_text
 
@@ -103,7 +107,7 @@ def create_reports_router(settings: Settings) -> APIRouter:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"Report not found: {report_id}",
-            )
+            ) from None
 
         metadata = parse_front_matter(raw_content)
         body = _extract_body(raw_content)
