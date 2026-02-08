@@ -3,7 +3,7 @@
 # Customize commands for your build system as needed.
 # ============================================================
 
-.PHONY: help build lint test test-unit test-integration test-e2e test-smoke test-perf ci deploy-staging deploy-production
+.PHONY: help build lint test test-unit test-frontend test-integration test-e2e test-smoke test-perf ci deploy-staging deploy-production
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -29,6 +29,9 @@ format: ## Auto-fix lint issues
 
 test-unit: ## Run unit tests (fast, mocked)
 	pytest tests/unit/ -m unit --cov=src --cov-report=term-missing
+
+test-frontend: ## Run frontend tests (Vitest)
+	npm test --prefix frontend
 
 test-integration: ## Run integration tests (real components)
 	pytest tests/integration/ -m integration
