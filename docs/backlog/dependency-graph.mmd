@@ -1,0 +1,50 @@
+graph TD
+    subgraph Foundation
+        S001[STORY-001<br/>Project Config & Dependencies]
+        S002[STORY-002<br/>Ollama Model Clients]
+    end
+
+    subgraph Agent Core
+        S003[STORY-003<br/>Tavily Search Tool]
+        S004[STORY-004<br/>Medical Expert Tool]
+        S005[STORY-005<br/>Deep Research Agent]
+        S006[STORY-006<br/>Report Persistence]
+    end
+
+    subgraph API Layer
+        S007[STORY-007<br/>FastAPI App & Health]
+        S008[STORY-008<br/>Research Endpoint + Streaming]
+        S009[STORY-009<br/>Reports Endpoints]
+    end
+
+    subgraph Frontend
+        S010[STORY-010<br/>React Setup & Layout]
+        S011[STORY-011<br/>Query Input & Streaming]
+        S012[STORY-012<br/>History Sidebar]
+    end
+
+    %% Foundation dependencies
+    S001 --> S002
+    S001 --> S003
+    S001 --> S006
+    S001 --> S007
+
+    %% Agent core dependencies
+    S002 --> S004
+    S002 --> S005
+    S003 --> S005
+    S004 --> S005
+
+    %% API dependencies
+    S005 --> S008
+    S006 --> S008
+    S006 --> S009
+    S007 --> S008
+    S007 --> S009
+    S007 --> S010
+
+    %% Frontend dependencies
+    S008 --> S011
+    S009 --> S012
+    S010 --> S011
+    S010 --> S012
