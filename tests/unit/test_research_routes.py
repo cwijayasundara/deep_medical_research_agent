@@ -9,6 +9,7 @@ Tests cover:
 """
 
 import json
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ def _make_mock_settings() -> MagicMock:
     return settings
 
 
-def _create_test_app() -> "FastAPI":
+def _create_test_app():
     """Create a test app with mocked dependencies."""
     from fastapi import FastAPI
 
@@ -55,9 +56,9 @@ class TestResearchEndpointStreaming:
         settings = _make_mock_settings()
         mock_agent = MagicMock()
         # Mock stream to yield one result event
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Final report content")]}
-        ])
+        mock_agent.stream.return_value = iter(
+            [{"messages": [MagicMock(content="Final report content")]}]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -65,9 +66,7 @@ class TestResearchEndpointStreaming:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report"):
-            response = client.post(
-                "/api/research", json={"query": "CRISPR gene therapy advances"}
-            )
+            response = client.post("/api/research", json={"query": "CRISPR gene therapy advances"})
 
         assert response.status_code == 200
 
@@ -79,9 +78,7 @@ class TestResearchEndpointStreaming:
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Report")]}
-        ])
+        mock_agent.stream.return_value = iter([{"messages": [MagicMock(content="Report")]}])
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -89,9 +86,7 @@ class TestResearchEndpointStreaming:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report"):
-            response = client.post(
-                "/api/research", json={"query": "test query"}
-            )
+            response = client.post("/api/research", json={"query": "test query"})
 
         assert "text/event-stream" in response.headers.get("content-type", "")
 
@@ -111,9 +106,11 @@ class TestStreamEventFormat:
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Final report")]},
-        ])
+        mock_agent.stream.return_value = iter(
+            [
+                {"messages": [MagicMock(content="Final report")]},
+            ]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -121,7 +118,7 @@ class TestStreamEventFormat:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report") as mock_save:
-            mock_save.return_value = MagicMock(name="2026-02-08_test.md")
+            mock_save.return_value = Path("/tmp/2026-02-08_test.md")
             response = client.post("/api/research", json={"query": "test"})
 
         lines = [line for line in response.text.strip().split("\n") if line.startswith("data:")]
@@ -142,9 +139,11 @@ class TestStreamEventFormat:
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Complete report")]},
-        ])
+        mock_agent.stream.return_value = iter(
+            [
+                {"messages": [MagicMock(content="Complete report")]},
+            ]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -152,7 +151,7 @@ class TestStreamEventFormat:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report") as mock_save:
-            mock_save.return_value = MagicMock(name="2026-02-08_test.md")
+            mock_save.return_value = Path("/tmp/2026-02-08_test.md")
             response = client.post("/api/research", json={"query": "test"})
 
         data_lines = [
@@ -170,9 +169,11 @@ class TestStreamEventFormat:
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="# Research Report\n\nFindings here.")]},
-        ])
+        mock_agent.stream.return_value = iter(
+            [
+                {"messages": [MagicMock(content="# Research Report\n\nFindings here.")]},
+            ]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -180,7 +181,7 @@ class TestStreamEventFormat:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report") as mock_save:
-            mock_save.return_value = MagicMock(name="2026-02-08_test.md")
+            mock_save.return_value = Path("/tmp/2026-02-08_test.md")
             response = client.post("/api/research", json={"query": "test"})
 
         data_lines = [
@@ -214,9 +215,11 @@ class TestReportAutoSave:
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Report content")]},
-        ])
+        mock_agent.stream.return_value = iter(
+            [
+                {"messages": [MagicMock(content="Report content")]},
+            ]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -224,7 +227,7 @@ class TestReportAutoSave:
 
         client = TestClient(app)
         with patch("src.api.routes.research.save_report") as mock_save:
-            mock_save.return_value = MagicMock(name="2026-02-08_test.md")
+            mock_save.return_value = Path("/tmp/2026-02-08_test.md")
             client.post("/api/research", json={"query": "CRISPR advances"})
 
         mock_save.assert_called_once()
@@ -235,17 +238,17 @@ class TestReportAutoSave:
 
     def test_result_event_includes_filename(self) -> None:
         """The result event includes the saved report filename."""
-        from pathlib import Path
-
         from fastapi.testclient import TestClient
 
         from src.api.routes.research import create_research_router
 
         settings = _make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([
-            {"messages": [MagicMock(content="Report")]},
-        ])
+        mock_agent.stream.return_value = iter(
+            [
+                {"messages": [MagicMock(content="Report")]},
+            ]
+        )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -259,9 +262,7 @@ class TestReportAutoSave:
         data_lines = [
             line for line in response.text.strip().split("\n") if line.startswith("data:")
         ]
-        result_events = [
-            json.loads(line.removeprefix("data: ").strip()) for line in data_lines
-        ]
+        result_events = [json.loads(line.removeprefix("data: ").strip()) for line in data_lines]
         result_event = next(e for e in result_events if e["type"] == "result")
         assert "2026-02-08_crispr-advances.md" in result_event.get("filename", "")
 
@@ -335,7 +336,10 @@ class TestAgentErrorStreaming:
         events = [json.loads(line.removeprefix("data: ").strip()) for line in data_lines]
         error_events = [e for e in events if e["type"] == "error"]
         assert len(error_events) >= 1
-        assert "failed" in error_events[0]["data"].lower() or "error" in error_events[0]["data"].lower()
+        assert (
+            "failed" in error_events[0]["data"].lower()
+            or "error" in error_events[0]["data"].lower()
+        )
 
     def test_error_event_logged_at_error_level(
         self,
