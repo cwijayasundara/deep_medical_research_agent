@@ -11,6 +11,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+def _make_mock_settings() -> MagicMock:
+    """Create a mock Settings with proper string attributes."""
+    settings = MagicMock()
+    settings.orchestrator_model = "qwen3:latest"
+    settings.medical_model = "MedAIBase/MedGemma1.0:4b"
+    settings.ollama_base_url = "http://localhost:11434"
+    settings.log_level = "INFO"
+    return settings
+
+
 # ---- AC-1: FastAPI app initializes with CORS and settings ----
 
 
@@ -22,8 +33,10 @@ class TestAppInitialization:
         """The app module exposes a FastAPI instance."""
         from src.api.app import create_app
 
-        with patch("src.api.app.load_settings") as mock_load:
-            mock_load.return_value = MagicMock()
+        with (
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
+        ):
             app = create_app()
 
         assert app is not None
@@ -32,11 +45,12 @@ class TestAppInitialization:
         """CORS is configured to allow the frontend origin."""
         from src.api.app import FRONTEND_ORIGIN, create_app
 
-        with patch("src.api.app.load_settings") as mock_load:
-            mock_load.return_value = MagicMock()
+        with (
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
+        ):
             app = create_app()
 
-        # Check middleware includes CORSMiddleware with correct origin
         cors_found = False
         for middleware in app.user_middleware:
             if "CORSMiddleware" in str(middleware.cls):
@@ -65,17 +79,13 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
-            mock_settings = MagicMock()
-            mock_settings.orchestrator_model = "qwen3:latest"
-            mock_settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-            mock_load.return_value = mock_settings
             app = create_app()
-
-        client = TestClient(app)
-        response = client.get("/api/health")
+            client = TestClient(app)
+            response = client.get("/api/health")
 
         assert response.status_code == 200
 
@@ -86,17 +96,13 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
-            mock_settings = MagicMock()
-            mock_settings.orchestrator_model = "qwen3:latest"
-            mock_settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-            mock_load.return_value = mock_settings
             app = create_app()
-
-        client = TestClient(app)
-        data = client.get("/api/health").json()
+            client = TestClient(app)
+            data = client.get("/api/health").json()
 
         assert data["status"] == "healthy"
 
@@ -107,17 +113,13 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
-            mock_settings = MagicMock()
-            mock_settings.orchestrator_model = "qwen3:latest"
-            mock_settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-            mock_load.return_value = mock_settings
             app = create_app()
-
-        client = TestClient(app)
-        data = client.get("/api/health").json()
+            client = TestClient(app)
+            data = client.get("/api/health").json()
 
         assert data["models"]["orchestrator"] == "qwen3:latest"
         assert data["models"]["medical"] == "MedAIBase/MedGemma1.0:4b"
@@ -129,18 +131,14 @@ class TestHealthEndpoint:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=True),
         ):
-            mock_load.return_value = MagicMock()
             app = create_app()
-
-        client = TestClient(app)
-
-        # /api/health should work
-        assert client.get("/api/health").status_code == 200
-        # /health should NOT work
-        assert client.get("/health").status_code == 404
+            client = TestClient(app)
+            assert client.get("/api/health").status_code == 200
+            assert client.get("/health").status_code == 404
 
 
 # ---- AC-3: Degraded health when Ollama is unavailable ----
@@ -157,17 +155,13 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
-            mock_settings = MagicMock()
-            mock_settings.orchestrator_model = "qwen3:latest"
-            mock_settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-            mock_load.return_value = mock_settings
             app = create_app()
-
-        client = TestClient(app)
-        data = client.get("/api/health").json()
+            client = TestClient(app)
+            data = client.get("/api/health").json()
 
         assert data["status"] == "degraded"
 
@@ -178,14 +172,13 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
-            mock_load.return_value = MagicMock()
             app = create_app()
-
-        client = TestClient(app)
-        response = client.get("/api/health")
+            client = TestClient(app)
+            response = client.get("/api/health")
 
         assert response.status_code == 200
 
@@ -196,17 +189,13 @@ class TestHealthDegradedMode:
         from src.api.app import create_app
 
         with (
-            patch("src.api.app.load_settings") as mock_load,
+            patch("src.api.app.load_settings", return_value=_make_mock_settings()),
+            patch("src.api.app.configure_logging"),
             patch("src.api.app._check_ollama_connectivity", return_value=False),
         ):
-            mock_settings = MagicMock()
-            mock_settings.orchestrator_model = "qwen3:latest"
-            mock_settings.medical_model = "MedAIBase/MedGemma1.0:4b"
-            mock_load.return_value = mock_settings
             app = create_app()
-
-        client = TestClient(app)
-        data = client.get("/api/health").json()
+            client = TestClient(app)
+            data = client.get("/api/health").json()
 
         assert data["models"]["orchestrator"] == "unavailable"
         assert data["models"]["medical"] == "unavailable"
