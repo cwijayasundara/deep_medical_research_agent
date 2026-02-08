@@ -42,6 +42,7 @@ def create_search_tool(settings: Settings) -> TavilySearch:
         max_results=DEFAULT_MAX_RESULTS,
         search_depth=DEFAULT_SEARCH_DEPTH,
         include_domains=domains,
+        tavily_api_key=settings.tavily_api_key,
     )
 
 

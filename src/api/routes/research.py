@@ -61,12 +61,35 @@ def _format_sse_event(event: StreamEvent) -> str:
     return f"data: {event.model_dump_json()}\n\n"
 
 
-def _extract_final_content(result: dict[str, Any]) -> str:
-    """Extract the final text content from the agent result."""
-    messages = result.get("messages", [])
-    if messages:
-        last_message = messages[-1]
-        return str(getattr(last_message, "content", str(last_message)))
+def _unwrap_messages(raw: Any) -> list[Any]:
+    """Unwrap messages from a LangGraph chunk value.
+
+    Messages may be a plain list or wrapped in an Overwrite object.
+    """
+    if isinstance(raw, list):
+        return raw
+    if hasattr(raw, "value"):
+        return list(raw.value) if not isinstance(raw.value, list) else raw.value
+    return []
+
+
+def _extract_final_content(chunk: dict[str, Any]) -> str:
+    """Extract the final text content from a LangGraph stream chunk.
+
+    Stream chunks are keyed by node name (e.g. {"model": {"messages": [...]}}).
+    """
+    for node_val in chunk.values():
+        if not isinstance(node_val, dict):
+            continue
+        raw_messages = node_val.get("messages")
+        if raw_messages is None:
+            continue
+        messages = _unwrap_messages(raw_messages)
+        if messages:
+            last_message = messages[-1]
+            content = str(getattr(last_message, "content", str(last_message)))
+            if content.strip():
+                return content
     return ""
 
 
@@ -88,7 +111,14 @@ def _research_stream_generator(
     try:
         final_content = ""
         for chunk in agent.stream({"messages": [HumanMessage(content=query)]}):
-            final_content = _extract_final_content(chunk)
+            node_names = list(chunk.keys())
+            for node_name in node_names:
+                yield _format_sse_event(
+                    StreamEvent(type=EVENT_TYPE_PROGRESS, data=f"Processing: {node_name}")
+                )
+            extracted = _extract_final_content(chunk)
+            if extracted:
+                final_content = extracted
 
         if not final_content:
             final_content = "No results produced by the research agent."

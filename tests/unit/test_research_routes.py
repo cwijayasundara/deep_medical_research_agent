@@ -48,7 +48,7 @@ class TestResearchEndpointStreaming:
         mock_agent = MagicMock()
         # Mock stream to yield one result event
         mock_agent.stream.return_value = iter(
-            [{"messages": [MagicMock(content="Final report content")]}]
+            [{"model": {"messages": [MagicMock(content="Final report content")]}}]
         )
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
@@ -69,7 +69,7 @@ class TestResearchEndpointStreaming:
 
         settings = make_mock_settings()
         mock_agent = MagicMock()
-        mock_agent.stream.return_value = iter([{"messages": [MagicMock(content="Report")]}])
+        mock_agent.stream.return_value = iter([{"model": {"messages": [MagicMock(content="Report")]}}])
 
         app = __import__("fastapi", fromlist=["FastAPI"]).FastAPI()
         router = create_research_router(settings=settings, agent=mock_agent)
@@ -99,7 +99,7 @@ class TestStreamEventFormat:
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
-                {"messages": [MagicMock(content="Final report")]},
+                {"model": {"messages": [MagicMock(content="Final report")]}},
             ]
         )
 
@@ -132,7 +132,7 @@ class TestStreamEventFormat:
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
-                {"messages": [MagicMock(content="Complete report")]},
+                {"model": {"messages": [MagicMock(content="Complete report")]}},
             ]
         )
 
@@ -162,7 +162,7 @@ class TestStreamEventFormat:
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
-                {"messages": [MagicMock(content="# Research Report\n\nFindings here.")]},
+                {"model": {"messages": [MagicMock(content="# Research Report\n\nFindings here.")]}},
             ]
         )
 
@@ -208,7 +208,7 @@ class TestReportAutoSave:
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
-                {"messages": [MagicMock(content="Report content")]},
+                {"model": {"messages": [MagicMock(content="Report content")]}},
             ]
         )
 
@@ -237,7 +237,7 @@ class TestReportAutoSave:
         mock_agent = MagicMock()
         mock_agent.stream.return_value = iter(
             [
-                {"messages": [MagicMock(content="Report")]},
+                {"model": {"messages": [MagicMock(content="Report")]}},
             ]
         )
 

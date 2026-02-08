@@ -37,6 +37,7 @@ class TestCreateSearchTool:
             max_results=DEFAULT_MAX_RESULTS,
             search_depth=DEFAULT_SEARCH_DEPTH,
             include_domains=DEFAULT_MEDICAL_DOMAINS,
+            tavily_api_key=settings_fixture.tavily_api_key,
         )
 
     @patch("src.tools.search.TavilySearch")

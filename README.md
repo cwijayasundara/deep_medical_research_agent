@@ -1,323 +1,245 @@
-# Claude Code SDLC Scaffolding Templates
+# Deep Medical Research Agent
 
-Production-ready Claude Code configuration that enforces consistent coding standards and a full SDLC workflow. Includes 9 slash commands, 5 enforcement rules (with OWASP security), 7 domain skills, 3 sub-agents, session ceremonies, starter permissions, and automated quality hooks.
+AI-powered medical research agent that plans and executes multi-step research using web search and specialized medical AI. Built with LangChain Deep Agents, Qwen3 (orchestrator), and MedGemma (medical specialist), all running locally via Ollama.
+
+## Architecture
+
+```
+User Query
+    |
+    v
++-------------+    SSE Stream    +------------------+
+|  React UI   | <--------------> |  FastAPI Backend  |
+|  :5173      |    POST /api/    |  :8000            |
++-------------+    research      +--------+---------+
+                                          |
+                                          v
+                                +-----------------------+
+                                |  Deep Research Agent   |
+                                |  (LangGraph loop)      |
+                                +--+------+------+------+
+                                   |      |      |
+                          +--------+      |      +--------+
+                          v               v               v
+                   +-----------+  +------------+  +----------+
+                   |  Tavily   |  |  MedGemma  |  |  Report  |
+                   |  Search   |  |  Expert    |  |  Storage |
+                   |  (HTTPS)  |  |  (Ollama)  |  |  (files) |
+                   +-----------+  +------------+  +----------+
+```
+
+The agent receives a research query, creates a multi-step plan, searches the web via Tavily, consults MedGemma for medical analysis, and produces a comprehensive markdown report — all streamed to the frontend in real time via Server-Sent Events.
 
 ## Prerequisites
 
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
-- Python 3.12+ and `pip`
-- Git and GitHub CLI (`gh`)
+- **Python 3.12+**
+- **Node.js 18+** and npm
+- **Ollama** — local LLM server ([install guide](https://ollama.ai))
+- **Tavily API key** — sign up at [tavily.com](https://tavily.com) (free tier available)
 
-## Getting the Template
+## Setup
 
-### Option A: Clone and reinitialize (recommended for new projects)
-
-```bash
-# 1. Clone the template repo
-git clone https://github.com/cwijayasundara/claude_code_scafolding_templates.git my-project
-cd my-project
-
-# 2. Remove the template's git history and start fresh
-rm -rf .git
-git init
-git add -A
-git commit -m "feat: initial project from SDLC scaffolding template"
-
-# 3. Install dev dependencies
-make build
-
-# 4. Verify everything works
-make ci
-```
-
-### Option B: Copy into an existing project
+### 1. Clone the repository
 
 ```bash
-# 1. Clone the template to a temporary location
-git clone https://github.com/cwijayasundara/claude_code_scafolding_templates.git /tmp/sdlc-template
-
-# 2. Copy the files you need into your project
-cp /tmp/sdlc-template/CLAUDE.md /path/to/your-project/
-cp -r /tmp/sdlc-template/.claude/ /path/to/your-project/.claude/
-cp -r /tmp/sdlc-template/.github/ /path/to/your-project/.github/
-
-# 3. Optionally copy bootstrap files (skip any you already have)
-cp /tmp/sdlc-template/pyproject.toml /path/to/your-project/
-cp /tmp/sdlc-template/Makefile /path/to/your-project/
-cp /tmp/sdlc-template/.env.example /path/to/your-project/
-cp /tmp/sdlc-template/.gitignore /path/to/your-project/
-cp /tmp/sdlc-template/Dockerfile /path/to/your-project/
-cp -r /tmp/sdlc-template/src/ /path/to/your-project/src/
-cp -r /tmp/sdlc-template/tests/ /path/to/your-project/tests/
-
-# 4. Clean up
-rm -rf /tmp/sdlc-template
+git clone <your-repo-url> deep-medical-research-agent
+cd deep-medical-research-agent
 ```
 
-### Option C: Download without git history
+### 2. Pull required Ollama models
 
 ```bash
-# Download and extract (no git history)
-gh repo clone cwijayasundara/claude_code_scafolding_templates my-project -- --depth=1
-cd my-project && rm -rf .git
+# Orchestrator model (tool-calling capable)
+ollama pull qwen3:latest
+
+# Medical specialist model
+ollama pull MedAIBase/MedGemma1.0:4b
 ```
 
-## Post-Setup: What to Customize
-
-After cloning, you **must** update these files for your project:
-
-### 1. `CLAUDE.md` (required)
-
-Open `CLAUDE.md` and update:
-
-```markdown
-# Project: [Your Project Name]       <-- Replace with your project name
-
-## Tech Stack
-- Backend: Python 3.12 / FastAPI     <-- Adjust to your actual stack
-```
-
-Also update the `## Commands` section if your `make` targets differ.
-
-### 2. `pyproject.toml` (required)
-
-```toml
-[project]
-name = "my-project"                   # <-- Your project name
-version = "0.1.0"
-description = "Your project description"  # <-- Your description
-dependencies = []                     # <-- Add your runtime dependencies
-```
-
-The linting (`ruff`), type-checking (`mypy`), and test (`pytest`) configurations are pre-configured and ready to use.
-
-### 3. `.env.example` (required)
-
-Update with the environment variables your project actually needs:
+Verify Ollama is running:
 
 ```bash
-# Replace the example variables with your own
-YOUR_API_KEY=your-key-here
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/mydb
+curl http://localhost:11434
+# Should return: "Ollama is running"
 ```
 
-Then create your local `.env` from it:
+### 3. Create a virtual environment and install Python dependencies
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+> **Note:** Always activate the venv (`source .venv/bin/activate`) before running the backend or tests.
+
+### 4. Install frontend dependencies
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+### 5. Configure environment variables
 
 ```bash
 cp .env.example .env
-# Edit .env with real values (never committed — already in .gitignore)
 ```
 
-### 4. `.claude/settings.json` (optional)
-
-The starter permissions pre-approve common dev commands so Claude Code doesn't prompt you for each one. Review and adjust:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(python3 *)",
-      "Bash(pytest *)",
-      "Bash(make *)",
-      "Bash(git *)"
-    ]
-  }
-}
-```
-
-Add or remove commands to match your stack (e.g., add `"Bash(cargo *)"` for Rust).
-
-### 5. `.claude/skills/` (optional)
-
-Keep the skills relevant to your stack, delete the rest:
+Edit `.env` and set your Tavily API key:
 
 ```bash
-# Example: remove skills you don't need
-rm -rf .claude/skills/react-frontend/       # No frontend
-rm -rf .claude/skills/langgraph-agents/     # No LangGraph
-rm -rf .claude/skills/deployment/           # Custom deployment
+# Required
+TAVILY_API_KEY=tvly-your-actual-key-here
+
+# Optional (defaults shown)
+OLLAMA_BASE_URL=http://localhost:11434
+OUTPUT_DIR=output
+LOG_LEVEL=INFO
+ORCHESTRATOR_MODEL=qwen3:latest
+MEDICAL_MODEL=MedAIBase/MedGemma1.0:4b
 ```
 
-Add new skills by creating `.claude/skills/<name>/SKILL.md` with YAML frontmatter.
+## Running the Agent
 
-### 6. `.github/workflows/` (optional)
-
-The CI workflow (`ci.yml`) runs `ruff`, `mypy`, unit tests, integration tests, and coverage checks on every push/PR. Update `release.yml` to match your Docker image name and registry.
-
-## Using the Template with Claude Code
-
-Once set up, open your project in a terminal and launch Claude Code:
+### Start the backend
 
 ```bash
-cd my-project
-claude
+uvicorn src.api.app:create_app --factory --reload --host 0.0.0.0 --port 8000
 ```
 
-Claude Code automatically reads `CLAUDE.md` and `.claude/` on startup. The rules, skills, and commands are immediately available.
-
-### Start a Session
-
-```
-/gogogo
-```
-
-This loads project context, checks git status, shows your backlog, and suggests what to work on next. **Always start here.**
-
-### The Development Cycle
-
-```
-/interview                              # 1. Gather requirements (optional)
-/decompose docs/requirements.md         # 2. Break into stories
-/implement docs/backlog/<story>.md      # 3. TDD: Red -> Green -> Refactor
-/pr                                     # 4. Run CI + create pull request
-/review 42                              # 5. Review PR #42
-/wrapup                                 # 6. Commit, push, handoff summary
-```
-
-### Between Stories
-
-```
-/clear                                  # Reset context window between stories
-/compact                                # Compress context during long sessions
-```
-
-### Other Commands
-
-```
-/diagnose <failure-output>              # Diagnose test failures, create hotfix
-/create-prompt                          # Build structured prompt (R.G.C.O.A.)
-```
-
-## What's Included
-
-```
-CLAUDE.md                                # Code standards, precedence rules,
-                                         # Pre-Completion Checklist (10 items)
-pyproject.toml                           # Ruff, mypy, pytest config (pre-configured)
-Makefile                                 # All build/test/deploy targets
-.env.example                             # Environment variable template
-.gitignore                               # Python, Node, IDE, OS ignores
-Dockerfile                               # Multi-stage Python 3.12 build
-.dockerignore                            # Lean Docker context
-
-src/                                     # Source code directory (stub)
-  __init__.py
-  __main__.py                            # Entry point stub
-
-tests/                                   # Test directories with markers
-  conftest.py                            # Shared fixtures
-  unit/
-  integration/
-  e2e/
-
-.claude/
-  settings.json                          # Hooks + starter permissions
-  rules/
-    security.md                          # Secrets, input validation, SQL injection
-    code-style.md                        # Size limits, constants, type safety
-    error-handling.md                    # try/except, logging, specific exceptions
-    testing.md                           # TDD, fixtures, coverage, mock rules
-    git-workflow.md                      # Branch naming, conventional commits
-  commands/
-    gogogo.md                            # /gogogo — Session startup ceremony
-    interview.md                         # /interview — Requirements gathering
-    decompose.md                         # /decompose — Requirements -> stories
-    implement.md                         # /implement — TDD Red-Green-Refactor
-    pr.md                                # /pr — Create pull request
-    review.md                            # /review — 10-point quality review
-    diagnose.md                          # /diagnose — Failure diagnosis + hotfix
-    wrapup.md                            # /wrapup — Session completion ceremony
-    create-prompt.md                     # /create-prompt — R.G.C.O.A. prompt builder
-  agents/
-    test-writer.yaml                     # TDD Red phase: writes failing tests
-    code-reviewer.yaml                   # 10-point quality checklist
-    architect.yaml                       # ADRs, C4 diagrams, tech evaluation
-  skills/
-    api-design/SKILL.md                  # REST conventions, Pydantic schemas
-    database-patterns/SKILL.md           # Repository pattern, migrations
-    testing/SKILL.md                     # TDD workflow, fixtures, mocking
-    deployment/SKILL.md                  # Docker, Azure App Service, rollback
-    langgraph-agents/SKILL.md            # LangGraph ReAct agents, tools, state
-    react-frontend/SKILL.md             # React 18 + TypeScript, streaming UI
-    claude-agent-teams/SKILL.md          # Claude agent teams, tool_use, caching
-
-.github/
-  workflows/
-    ci.yml                               # Lint + test on push/PR
-    release.yml                          # Docker build on tag
-
-claude-code-sdlc-framework-v2.md         # Framework theory and design rationale
-```
-
-## How the Enforcement Layers Work
-
-The template uses a layered approach — each layer catches different issues at different times:
-
-| Layer | What It Does | When It Runs |
-|-------|-------------|--------------|
-| **Starter Permissions** | Pre-approves safe commands (python, pytest, make, git, etc.) | Every tool call |
-| **PostToolUse Hook** | Runs `ruff check --fix` + `mypy` after every file edit | Automatic, after Write/Edit |
-| **PreCommit Hook** | Runs `make ci` (lint + all tests) before every git commit | Automatic, before commit |
-| **Rules** | BAD/GOOD examples for security, code style, error handling, testing, git | Auto-loaded by file path |
-| **CLAUDE.md** | Standards summary, Pre-Completion Checklist, precedence rules | Read every session |
-| **Commands** | Slash commands for the full SDLC workflow | Invoked by user |
-| **Agents** | Specialized sub-agents (test-writer, code-reviewer, architect) | Called by commands |
-| **Skills** | Domain knowledge (API design, DB patterns, deployment, etc.) | Referenced as needed |
-
-### Precedence (when rules conflict)
-
-1. Security rules (always win)
-2. Error handling rules
-3. Code style rules
-4. Testing rules
-5. Git workflow rules
-6. Skill recommendations (advisory)
-
-## Make Targets
+The API will be available at `http://localhost:8000`. Check health:
 
 ```bash
-make help               # Show all targets with descriptions
-make build              # Install project + dev dependencies
-make lint               # Run ruff + mypy
-make format             # Auto-fix lint issues
-make test-unit          # Run unit tests with coverage
-make test-integration   # Run integration tests
-make test-e2e           # Run end-to-end tests
-make test               # Run unit + integration (default CI suite)
-make ci                 # Full CI: lint + test (used by pre-commit hook)
-make deploy-staging     # Deploy to Azure staging slot (configure first)
-make deploy-production  # Swap staging to production
+curl http://localhost:8000/api/health
 ```
 
-## Default Tech Stack
+### Start the frontend
 
-The template is pre-configured for this stack, but every part is customizable:
+In a separate terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The UI will be available at `http://localhost:5173`.
+
+### Using the application
+
+1. Open `http://localhost:5173` in your browser
+2. Check the health indicator (green = backend connected, models available)
+3. Enter a medical research query (e.g., "What are the latest treatments for type 2 diabetes?")
+4. Watch real-time progress as the agent searches, analyzes, and writes the report
+5. View the completed markdown report in the main area
+6. Browse past research in the sidebar
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check with model availability |
+| `POST` | `/api/research` | Start research (SSE streaming response) |
+| `GET` | `/api/reports` | List all saved reports |
+| `GET` | `/api/reports/{id}` | Get a specific report by ID |
+
+### Example: Start a research query
+
+```bash
+curl -X POST http://localhost:8000/api/research \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are the latest treatments for type 2 diabetes?"}' \
+  --no-buffer
+```
+
+The response is an SSE stream with events:
+
+```
+data: {"type": "progress", "data": "Planning research steps..."}
+data: {"type": "progress", "data": "Searching for clinical trials..."}
+data: {"type": "result", "data": "# Research Report\n\n...", "filename": "report-2025-01-15.md"}
+```
+
+## Project Structure
+
+```
+src/
+├── config/settings.py          # Pydantic BaseSettings from .env
+├── models/clients.py           # Qwen3 + MedGemma ChatOllama wrappers
+├── tools/
+│   ├── search.py               # Tavily search tool
+│   └── medical.py              # MedGemma consultation tool
+├── agent/research_agent.py     # Deep research agent assembly
+├── services/report_service.py  # Report save/list/retrieve
+└── api/
+    ├── app.py                  # FastAPI app factory
+    └── routes/
+        ├── research.py         # POST /api/research (SSE)
+        └── reports.py          # GET /api/reports
+
+frontend/
+├── src/
+│   ├── App.tsx                 # Main app wiring
+│   ├── components/
+│   │   ├── Layout.tsx          # Header + sidebar + content
+│   │   ├── HealthIndicator.tsx # Backend status indicator
+│   │   ├── ResearchInput.tsx   # Query input with submit/stop
+│   │   ├── ProgressLog.tsx     # Real-time progress messages
+│   │   ├── ReportViewer.tsx    # Markdown report renderer
+│   │   └── HistorySidebar.tsx  # Past research list
+│   ├── hooks/
+│   │   ├── useResearch.ts      # SSE streaming hook
+│   │   └── useReportHistory.ts # Report history state
+│   └── lib/
+│       ├── api-client.ts       # Health API client
+│       ├── research-api.ts     # SSE parsing utilities
+│       └── reports-api.ts      # Reports API client
+├── package.json
+└── vite.config.ts
+```
+
+## Development
+
+### Running tests
+
+```bash
+# Backend unit tests (with coverage)
+make test-unit
+
+# Frontend tests
+make test-frontend
+
+# All tests
+make test-unit && make test-frontend
+
+# Lint + type check
+make lint
+
+# Full CI (lint + tests)
+make ci
+```
+
+### Environment variables reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TAVILY_API_KEY` | Yes | — | API key for Tavily web search |
+| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL |
+| `OUTPUT_DIR` | No | `output` | Directory for saved research reports |
+| `LOG_LEVEL` | No | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
+| `ORCHESTRATOR_MODEL` | No | `qwen3:latest` | Ollama model for orchestration |
+| `MEDICAL_MODEL` | No | `MedAIBase/MedGemma1.0:4b` | Ollama model for medical analysis |
+| `VITE_API_URL` | No | `http://localhost:8000/api` | Backend API URL (frontend) |
+
+## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| Backend | Python 3.12 / FastAPI / SQLAlchemy |
-| Frontend | React 18 / TypeScript / Tailwind |
-| AI/Agents | LangGraph / LangChain / Claude Opus 4.6 |
-| Infrastructure | Azure App Service / Azure Database for PostgreSQL |
-| Testing | pytest, Playwright, Locust, Schemathesis |
-| CI/CD | GitHub Actions |
-
-## Context Management Tips
-
-Claude Code's context window fills up during long sessions. Follow these practices:
-
-- **Start/end ceremony**: `/gogogo` at start, `/wrapup` at end — clean handoffs between sessions
-- **Clear between stories**: `/clear` after completing each story to reset context
-- **Compact when needed**: `/compact` during long sessions to reclaim space while preserving key state
-- **Delegate investigation**: Use sub-agents (test-writer, code-reviewer, architect) for codebase exploration — they don't pollute main context
-- **Interview first**: For large features, `/interview` before `/decompose` to avoid requirements back-and-forth
-
-## Reference
-
-| Resource | Description |
-|----------|-------------|
-| `CLAUDE.md` | Code standards, commands, and Pre-Completion Checklist |
-| `.claude/rules/` | Detailed BAD/GOOD examples for each rule category |
-| `.claude/skills/` | Domain knowledge documents with YAML frontmatter |
-| `claude-code-sdlc-framework-v2.md` | Full framework theory and design rationale |
-| [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) | Official Claude Code documentation |
+| Backend | Python 3.12 / FastAPI / Uvicorn |
+| Frontend | React 19 / TypeScript / Vite / Tailwind CSS v4 |
+| AI Agent | LangChain Deep Agents / LangGraph |
+| Orchestrator LLM | Qwen3 via Ollama (tool-calling) |
+| Medical LLM | MedGemma 1.0 via Ollama |
+| Web Search | Tavily API |
+| Testing | pytest (backend) / Vitest (frontend) |

@@ -34,9 +34,13 @@ def env_minimal_settings(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture()
 def env_no_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Clear all settings-related environment variables."""
+    """Clear all settings-related environment variables and prevent .env loading."""
     for key in ("TAVILY_API_KEY", "OLLAMA_BASE_URL", "OUTPUT_DIR", "LOG_LEVEL"):
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(
+        "src.config.settings.Settings.model_config",
+        {"env_file": None, "env_file_encoding": "utf-8", "extra": "ignore"},
+    )
 
 
 # ---- Mock Settings fixture ----
