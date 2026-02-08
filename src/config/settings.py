@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     log_level: str = DEFAULT_LOG_LEVEL
     orchestrator_model: str = DEFAULT_ORCHESTRATOR_MODEL
     medical_model: str = DEFAULT_MEDICAL_MODEL
+    tavily_include_domains: list[str] | None = None
 
 
 def load_settings() -> Settings | None:
