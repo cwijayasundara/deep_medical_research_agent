@@ -48,6 +48,11 @@ export function useReportHistory() {
     setSelectedReport(null);
   }, []);
 
+  const refreshReports = useCallback(async () => {
+    const data = await fetchReports();
+    setReports(data);
+  }, []);
+
   return {
     reports,
     isLoadingHistory,
@@ -56,5 +61,6 @@ export function useReportHistory() {
     selectReport,
     addReport,
     clearSelection,
+    refreshReports,
   };
 }

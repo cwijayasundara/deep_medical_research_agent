@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { HealthIndicator } from "./components/HealthIndicator.tsx";
 import { HistorySidebar } from "./components/HistorySidebar.tsx";
 import { Layout } from "./components/Layout.tsx";
@@ -16,9 +17,15 @@ export default function App() {
     selectedReportId,
     selectedReport,
     selectReport,
-    addReport,
     clearSelection,
+    refreshReports,
   } = useReportHistory();
+
+  useEffect(() => {
+    if (report) {
+      refreshReports();
+    }
+  }, [report, refreshReports]);
 
   const handleStartResearch = async (query: string) => {
     clearSelection();
