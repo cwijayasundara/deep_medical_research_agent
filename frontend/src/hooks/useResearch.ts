@@ -1,7 +1,16 @@
 /** Hook for managing research state with SSE streaming. */
 
 import { useCallback, useRef, useState } from "react";
-import { buildResearchUrl, parseSSEEvent } from "../lib/research-api.ts";
+import {
+  EVENT_TYPE_ERROR,
+  EVENT_TYPE_PROGRESS,
+  EVENT_TYPE_RESULT,
+  buildResearchUrl,
+  parseSSEEvent,
+} from "../lib/research-api.ts";
+
+const ABORT_ERROR_NAME = "AbortError";
+const UNKNOWN_ERROR_MESSAGE = "An unexpected error occurred";
 
 export interface ResearchReport {
   content: string;
@@ -46,11 +55,11 @@ async function processSSEStream(
       const event = parseSSEEvent(trimmed);
       if (!event) continue;
 
-      if (event.type === "progress") {
+      if (event.type === EVENT_TYPE_PROGRESS) {
         onProgress(event.data);
-      } else if (event.type === "result") {
+      } else if (event.type === EVENT_TYPE_RESULT) {
         onResult({ content: event.data, filename: event.filename ?? "" });
-      } else if (event.type === "error") {
+      } else if (event.type === EVENT_TYPE_ERROR) {
         onError(event.data);
       }
     }
@@ -115,14 +124,14 @@ export function useResearch() {
 
       setState((prev) => ({ ...prev, isLoading: false }));
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
+      if (err instanceof DOMException && err.name === ABORT_ERROR_NAME) {
         setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err instanceof Error ? err.message : "Unknown error",
+        error: err instanceof Error ? err.message : UNKNOWN_ERROR_MESSAGE,
       }));
     }
   }, []);

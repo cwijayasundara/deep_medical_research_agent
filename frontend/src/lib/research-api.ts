@@ -5,8 +5,12 @@ import { API_BASE_URL } from "./api-client.ts";
 const SSE_DATA_PREFIX = "data: ";
 const RESEARCH_ENDPOINT = "/research";
 
+export const EVENT_TYPE_PROGRESS = "progress" as const;
+export const EVENT_TYPE_RESULT = "result" as const;
+export const EVENT_TYPE_ERROR = "error" as const;
+
 export interface StreamEvent {
-  type: "progress" | "result" | "error";
+  type: typeof EVENT_TYPE_PROGRESS | typeof EVENT_TYPE_RESULT | typeof EVENT_TYPE_ERROR;
   data: string;
   filename?: string;
 }
