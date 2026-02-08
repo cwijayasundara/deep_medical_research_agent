@@ -59,4 +59,5 @@ def settings_fixture() -> MagicMock:
     settings.log_level = TEST_LOG_LEVEL
     settings.orchestrator_model = TEST_ORCHESTRATOR_MODEL
     settings.medical_model = TEST_MEDICAL_MODEL
+    settings.tavily_include_domains = None
     return settings
