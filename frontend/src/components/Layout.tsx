@@ -5,9 +5,10 @@ const APP_TITLE = "Deep Medical Research Agent";
 
 interface LayoutProps {
   children?: ReactNode;
+  sidebar?: ReactNode;
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, sidebar }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-slate-800 text-white px-6 py-4">
@@ -16,7 +17,9 @@ export function Layout({ children }: LayoutProps) {
 
       <div className="flex flex-1">
         <aside className="w-64 bg-slate-100 p-4 border-r border-slate-200">
-          <p className="text-sm text-slate-500">Research History</p>
+          {sidebar ?? (
+            <p className="text-sm text-slate-500">Research History</p>
+          )}
         </aside>
 
         <main className="flex-1 p-6">{children}</main>
